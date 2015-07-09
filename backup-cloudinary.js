@@ -23,28 +23,6 @@ var qRequest = function(opts) {
 	return defer.promise;
 }
 
-//use request and Q to download a given file
-var downloadFile = function(url, filename, destination) {
-	var defer = Q.defer();
-
-	var target = __dirname
-	if (destination) target = [target, destination].join('/')
-	target = [target, filename].join("/")
-
-	//console.log('starting download of:', filename)
-	//console.log('file destination: ', target)
-	//console.log('current path', __dirname)
-	request(url)
-		.pipe(fs.createWriteStream(target))
-		.on('close', function() {
-			//console.log('done downloading: ', filename)
-			defer.resolve(filename)
-		})
-		.on('error', defer.reject)
-
-	return defer.promise;
-}
-
 //fetch all images from cloudinary (request 500 images repeatedly until no more are found)
 var fetchImages = function(opts, images) {
 	if (!images) images = []
@@ -69,20 +47,40 @@ var fetchImages = function(opts, images) {
 		})
 }
 
-var downloadImages = function(images) {
-	console.log("images count", images.length)
-	//var imageURLs = images.map(function(image) { 
-		//return image.url 
-	//})
-	//console.log("imageURLs", imageURLs)
-	//
-	var sampleImg = images[0]
-	console.log("sample image", sampleImg)
-	var filename = sampleImg.public_id + "." + sampleImg.format
-	downloadFile(sampleImg.url, filename, "images")
-		.then(function(filename) {
-			console.log('done downloading:', filename)
+//use request and Q to download a given file
+var downloadFile = function(url, filename, destination) {
+	var defer = Q.defer();
+
+	var target = __dirname
+	if (destination) target = [target, destination].join('/')
+	target = [target, filename].join("/")
+
+	console.log('started downloading:', filename)
+	//console.log('file destination: ', target)
+	//console.log('current path', __dirname)
+	request(url)
+		.pipe(fs.createWriteStream(target))
+		.on('close', function() {
+			console.log('done downloading: ', filename)
+			defer.resolve(filename)
 		})
+		.on('error', defer.reject)
+
+	return defer.promise;
+}
+
+var downloadImages = function(images) {
+	console.log("images remaining in batch", images.length)
+
+	var image = images.splice(0,1)[0]
+	return downloadFile(image.url, getFilename(image), "images")
+		.then(function() {
+			if (images.length) downloadImages(images)
+		})
+}
+
+var getFilename = function(image) {
+	return image.public_id + "." + image.format
 }
 
 var opts = {url: imagesURL, qs: {max_results: 500}}
