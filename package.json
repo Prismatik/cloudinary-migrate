@@ -1,0 +1,23 @@
+{
+  "name": "cloudinary-migrate",
+  "version": "1.0.0",
+  "description": "",
+  "main": "backup-cloudinary.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Prismatik/cloudinary-migrate.git"
+  },
+  "author": "Simon Taylor <nizmox@gmail.com> (https://github.com/s-taylor)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Prismatik/cloudinary-migrate/issues"
+  },
+  "homepage": "https://github.com/Prismatik/cloudinary-migrate",
+  "dependencies": {
+    "q": "^1.4.1",
+    "request": "^2.58.0"
+  }
+}
