@@ -23,43 +23,39 @@ console.log("imagesDir", imagesDir)
 fs.readdir(imagesDir, function(err, files) {
 	console.log('files', files)
 	
-	//files.forEach(function(filename) {
-	var filename = files[0]
-	var fullpath = [imagesDir, filename].join("/");
+	files.forEach(function(filename) {
+		var fullpath = [imagesDir, filename].join("/");
 
-	var now = new Date
-	var basename = filename.replace(/\.[^.]+$/, "")
-	
-	var query = {
-		public_id: basename,
-		timestamp: now.getTime()
-	}
-	//console.log('query', query)
+		var now = new Date
+		var basename = filename.replace(/\.[^.]+$/, "")
+		
+		var query = {
+			public_id: basename,
+			timestamp: now.getTime()
+		}
+		//console.log('query', query)
 
-	var queryString = qs.stringify(query)
-	console.log(queryString)
+		var queryString = qs.stringify(query)
+		console.log(queryString)
 
-	var shasum = crypto.createHash('sha1');
-	shasum.update(queryString + config.upload.API_SECRET);
-	//var sha1Hex = shasum.digest('hex')
-	//console.log("sha1Hex", sha1Hex);
-	//
-	query.signature = shasum.digest('hex')
-	console.log(query)
+		var shasum = crypto.createHash('sha1');
+		shasum.update(queryString + config.upload.API_SECRET);
+		//var sha1Hex = shasum.digest('hex')
+		//console.log("sha1Hex", sha1Hex);
+		//
+		query.signature = shasum.digest('hex')
+		console.log(query)
 
-	query.api_key = config.upload.API_KEY;
+		query.api_key = config.upload.API_KEY;
 
-	var formData = {file: fs.createReadStream(fullpath)}
+		var formData = {file: fs.createReadStream(fullpath)}
 
-	var url = "https://api.cloudinary.com/v1_1/" + config.upload.CLOUD_NAME + "/image/upload"
-	var opts = {url: url, qs: query, formData: formData}
+		var url = "https://api.cloudinary.com/v1_1/" + config.upload.CLOUD_NAME + "/image/upload"
+		var opts = {url: url, qs: query, formData: formData}
 
-	console.log('opts', opts)
-	return qRequest.request(opts)
-		.then(function(result) { console.log('body:', result.body) })
-		.catch(function(err) { console.error('error:', err)})
-
- 
-
-	//})
+		console.log('opts', opts)
+		return qRequest.request(opts)
+			.then(function(result) { console.log('body:', result.body) })
+			.catch(function(err) { console.error('error:', err)})
+	})
 })
