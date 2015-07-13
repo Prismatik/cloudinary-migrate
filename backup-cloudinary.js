@@ -3,10 +3,6 @@ var request = require('request');
 var fs = require('fs');
 var config = require('root/config.json');
 
-var imagesURL = "https://" + config.from.API_KEY + ":" + config.from.API_SECRET + "@api.cloudinary.com/v1_1/" + config.from.CLOUD_NAME + "/resources/image"
-console.log('url:', imagesURL)
-
-
 //convert request to use promises
 var qRequest = function(opts) {
 	var defer = Q.defer();
@@ -40,7 +36,8 @@ var fetchImages = function(opts, images) {
 				
 				//update the next cursor in the opts
 				opts.qs.next_cursor = result.body.next_cursor
-				//return fetchImages(opts, allImages);
+				//fetch the next lot of images
+				return fetchImages(opts, allImages);
 			}
 			return allImages;
 			
@@ -83,7 +80,15 @@ var getFilename = function(image) {
 	return image.public_id + "." + image.format
 }
 
-var opts = {url: imagesURL, qs: {max_results: 500}}
+var getImagesURL = function(keys) {
+	var imagesURL = "https://" + keys.API_KEY + ":";
+	imagesURL += keys.API_SECRET + "@api.cloudinary.com/v1_1/";
+	imagesURL += keys.CLOUD_NAME + "/resources/image";
+	return imagesURL;
+}
+
+console.log('getImagesURL', getImagesURL(config.from))
+var opts = {url: getImagesURL(config.from), qs: {max_results: 500}}
 fetchImages(opts)
 	.then(downloadImages)
 	.catch(function(err) { console.error("error: ", err) })
