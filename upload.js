@@ -61,7 +61,8 @@ var uploadFiles = function() {
 
 		var result = uploadFile(firstFile)
 		files.forEach(function(filename) {
-			var nextUpload = uploadFile(filename)
+			//queue the next upload
+			var nextUpload = uploadFile.bind(this, filename)
 			result = result.then(nextUpload)
 		})
 		return result;
