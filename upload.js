@@ -17,45 +17,57 @@ var qs = require('querystring');
 var qRequest = require("root/lib/q-request")
 var config = require("root/config")
 
-var imagesDir = __dirname + "/images"
-console.log("imagesDir", imagesDir)
+var uploadFile = function(filename) {
+	console.log('uploading file', filename)
+	var fullpath = [imagesDir, filename].join("/");
 
-fs.readdir(imagesDir, function(err, files) {
-	console.log('files', files)
+	var now = new Date
+	var basename = filename.replace(/\.[^.]+$/, "")
 	
-	files.forEach(function(filename) {
-		var fullpath = [imagesDir, filename].join("/");
+	var query = {
+		public_id: basename,
+		timestamp: now.getTime()
+	}
 
-		var now = new Date
-		var basename = filename.replace(/\.[^.]+$/, "")
-		
-		var query = {
-			public_id: basename,
-			timestamp: now.getTime()
-		}
-		//console.log('query', query)
+	//generate signature
+	var queryString = qs.stringify(query)
+	var shasum = crypto.createHash('sha1');
+	shasum.update(queryString + config.upload.API_SECRET);
+	query.signature = shasum.digest('hex')
 
-		var queryString = qs.stringify(query)
-		console.log(queryString)
+	query.api_key = config.upload.API_KEY;
 
-		var shasum = crypto.createHash('sha1');
-		shasum.update(queryString + config.upload.API_SECRET);
-		//var sha1Hex = shasum.digest('hex')
-		//console.log("sha1Hex", sha1Hex);
-		//
-		query.signature = shasum.digest('hex')
-		console.log(query)
+	//read file into request
+	var formData = {file: fs.createReadStream(fullpath)}
 
-		query.api_key = config.upload.API_KEY;
+	var url = "https://api.cloudinary.com/v1_1/" + config.upload.CLOUD_NAME + "/image/upload"
+	var opts = {url: url, qs: query, formData: formData}
 
-		var formData = {file: fs.createReadStream(fullpath)}
+	return qRequest.request(opts)
+		.then(function(result) {
+			var filename = result.body.original_filename + "." + result.body.format;
+			console.log('done uploading', filename);
+			return filename;
+		})
+}
 
-		var url = "https://api.cloudinary.com/v1_1/" + config.upload.CLOUD_NAME + "/image/upload"
-		var opts = {url: url, qs: query, formData: formData}
+var uploadFiles = function() {
+	console.log("imagesDir", imagesDir)
 
-		console.log('opts', opts)
-		return qRequest.request(opts)
-			.then(function(result) { console.log('body:', result.body) })
-			.catch(function(err) { console.error('error:', err)})
+	fs.readdir(imagesDir, function(err, files) {
+		console.log('files', files)
+
+		var firstFile = files.splice(0,1)[0]
+
+		var result = uploadFile(firstFile)
+		files.forEach(function(filename) {
+			var nextUpload = uploadFile(filename)
+			result = result.then(nextUpload)
+		})
+		return result;
 	})
-})
+}
+
+var imagesDir = __dirname + "/images"
+uploadFiles()
+	//.catch(function(err) { console.error('error:', err)})
