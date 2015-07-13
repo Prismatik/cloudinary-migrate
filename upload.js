@@ -5,7 +5,7 @@ var qs = require('querystring');
 var qRequest = require("root/lib/q-request")
 var config = require("root/config")
 
-var uploadFile = function(imagesDir, filename) {
+var uploadImage = function(imagesDir, filename) {
 	console.log('uploading file', filename)
 	var fullpath = [imagesDir, filename].join("/");
 
@@ -39,21 +39,21 @@ var uploadFile = function(imagesDir, filename) {
 		})
 }
 
-var uploadFiles = function(imagesDir) {
+var uploadImages = function(imagesDir) {
 	console.log("imagesDir", imagesDir)
 
 	var files = fs.readdirSync(imagesDir)
 
 	var firstFile = files.splice(0,1)[0]
-	var result = uploadFile(imagesDir, firstFile)
+	var result = uploadImage(imagesDir, firstFile)
 	files.forEach(function(filename) {
 		//queue the next upload (use .bind to prevent immediate execution)
-		var nextUpload = uploadFile.bind(this, imagesDir, filename)
+		var nextUpload = uploadImage.bind(this, imagesDir, filename)
 		result = result.then(nextUpload)
 	})
 	return result;
 }
 
 var directory = __dirname + "/images"
-uploadFiles(directory)
+uploadImages(directory)
 	.catch(function(err) { console.error(err) })
