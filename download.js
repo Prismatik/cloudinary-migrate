@@ -1,6 +1,6 @@
 var Q = require('q');
-var fs = require('fs');
 var config = require('root/config.json');
+var request = require('request')
 var qRequest = require('root/lib/q-request')
 
 //fetch all images from cloudinary (request 500 images repeatedly until no more are found)
@@ -8,7 +8,7 @@ var fetchImages = function(opts, images) {
 	if (!images) images = []
 	//console.log('opts', opts)
 
-	return qRequest(opts)
+	return qRequest.request(opts)
 		.then(function(result) {
 			var newImages = result.body.resources;
 			var allImages = images.concat(newImages)
@@ -28,35 +28,13 @@ var fetchImages = function(opts, images) {
 		})
 }
 
-//use request and Q to download a given file
-var downloadFile = function(url, filename, destination) {
-	var defer = Q.defer();
-
-	var target = __dirname
-	if (destination) target = [target, destination].join('/')
-	target = [target, filename].join("/")
-
-	console.log('started downloading:', filename)
-	//console.log('file destination: ', target)
-	//console.log('current path', __dirname)
-	request(url)
-		.pipe(fs.createWriteStream(target))
-		.on('close', function() {
-			console.log('done downloading: ', filename)
-			defer.resolve(filename)
-		})
-		.on('error', defer.reject)
-
-	return defer.promise;
-}
-
-var downloadImages = function(images) {
+var downloadImages = function(savePath, images) {
 	console.log("images remaining in batch", images.length)
 
 	var image = images.splice(0,1)[0]
-	return downloadFile(image.url, getFilename(image), "images")
+	return qRequest.downloadFile(image.url, getFilename(image), savePath)
 		.then(function() {
-			if (images.length) downloadImages(images)
+			if (images.length) downloadImages(savePath, images)
 		})
 }
 
@@ -73,6 +51,9 @@ var getImagesURL = function(keys) {
 
 console.log('getImagesURL', getImagesURL(config.from))
 var opts = {url: getImagesURL(config.from), qs: {max_results: 500}}
+var savePath = [__dirname, "images"].join("/")
+console.log('savePath', savePath)
+
 fetchImages(opts)
-	.then(downloadImages)
+	.then(downloadImages.bind(this, savePath))
 	.catch(function(err) { console.error("error: ", err) })
