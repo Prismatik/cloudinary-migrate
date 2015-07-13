@@ -1,19 +1,7 @@
-//var url = "https://api.cloudinary.com/v1_1/demo/image/upload"
-
-
-//Required parameters:
-
-//file - Either the actual data of the image or an HTTP URL of a public image on the Internet.
-//api_key - Your unique Cloudinary API Key.
-//timestamp - Unix time in seconds of the current time.
-//signature - A signature of all request parameters except for 'file', based on your Cloudinary API Secret. See Request Authentication for more details.
-//Optional parameters:
-
-//public_id - The identifier that is used for accessing the uploaded resource. A randomly generated ID is assigned if not specified. The public ID may contain a full path including folders separated by '/'.
-
 var crypto = require('crypto');
 var fs = require('fs');
 var qs = require('querystring');
+
 var qRequest = require("root/lib/q-request")
 var config = require("root/config")
 
@@ -54,21 +42,18 @@ var uploadFile = function(filename) {
 var uploadFiles = function() {
 	console.log("imagesDir", imagesDir)
 
-	fs.readdir(imagesDir, function(err, files) {
-		console.log('files', files)
+	var files = fs.readdirSync(imagesDir)
 
-		var firstFile = files.splice(0,1)[0]
-
-		var result = uploadFile(firstFile)
-		files.forEach(function(filename) {
-			//queue the next upload
-			var nextUpload = uploadFile.bind(this, filename)
-			result = result.then(nextUpload)
-		})
-		return result;
+	var firstFile = files.splice(0,1)[0]
+	var result = uploadFile(firstFile)
+	files.forEach(function(filename) {
+		//queue the next upload (use .bind to prevent immediate execution)
+		var nextUpload = uploadFile.bind(this, filename)
+		result = result.then(nextUpload)
 	})
+	return result;
 }
 
 var imagesDir = __dirname + "/images"
 uploadFiles()
-	//.catch(function(err) { console.error('error:', err)})
+	.catch(function(err) { console.error(err) })
