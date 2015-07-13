@@ -1,23 +1,7 @@
 var Q = require('q');
-var request = require('request');
 var fs = require('fs');
 var config = require('root/config.json');
-
-//convert request to use promises
-var qRequest = function(opts) {
-	var defer = Q.defer();
-	
-	request(opts, function(error, response, body) {
-		if (error) return defer.reject(error);
-		var parsedBody = JSON.parse(body)
-		defer.resolve({
-			response: response,
-			body: parsedBody
-		})
-	})
-
-	return defer.promise;
-}
+var qRequest = require('root/lib/q-request')
 
 //fetch all images from cloudinary (request 500 images repeatedly until no more are found)
 var fetchImages = function(opts, images) {
