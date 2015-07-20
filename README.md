@@ -17,4 +17,4 @@ This was designed to allow the migration of all images between one cloudinary ac
 
 ### Other
 
-Images are downloaded into the `images/` folder. If you want to upload other images put them in `/images` and run `node upload`. The filename (without the extension) is used as the public_id within cloudinary.
+Images are downloaded into the `/images` folder. If you want to upload other images put them in `/images` and run `node upload`. The filename (without the extension) is used as the public_id within cloudinary.
