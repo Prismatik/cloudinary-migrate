@@ -30,11 +30,15 @@ var fetchImages = function(opts, images) {
 var downloadImages = function(savePath, images) {
 	console.log("images remaining in batch", images.length);
 
-	var image = images.splice(0,1)[0];
-	return qRequest.downloadFile(image.url, getFilename(image), savePath)
-		.then(function() {
-			if (images.length) downloadImages(savePath, images);
-		});
+	var firstImage = images.splice(0,1)[0];
+	var result = qRequest.downloadFile(firstImage.url, getFilename(firstImage), savePath);
+	images.forEach(function(image) {
+		var filename = getFilename(image);
+		var nextDownload = qRequest.downloadFile.bind(this, image.url, filename, savePath);
+		result = result.then(nextDownload);
+	})
+
+	return result;
 };
 
 var getFilename = function(image) {
@@ -48,8 +52,8 @@ var getImagesURL = function(keys) {
 	return imagesURL;
 };
 
-console.log('getImagesURL', getImagesURL(config.from));
-var opts = {url: getImagesURL(config.from), qs: {max_results: 500}};
+console.log('getImagesURL', getImagesURL(config.download));
+var opts = {url: getImagesURL(config.download), qs: {max_results: 500}};
 var savePath = [__dirname, "images"].join("/");
 console.log('savePath', savePath);
 
