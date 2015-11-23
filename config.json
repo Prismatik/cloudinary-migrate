@@ -1,12 +1,12 @@
 {
-	"download": {
-		"CLOUD_NAME": "",
-		"API_KEY": "",
-		"API_SECRET": ""
-	},
-	"upload": {
-		"CLOUD_NAME": "",
-		"API_KEY": "",
-		"API_SECRET": ""
-	}
+  "download": {
+    "CLOUD_NAME": "",
+    "API_KEY": "",
+    "API_SECRET": ""
+  },
+  "upload": {
+    "CLOUD_NAME": "",
+    "API_KEY": "",
+    "API_SECRET": ""
+  }
 }
