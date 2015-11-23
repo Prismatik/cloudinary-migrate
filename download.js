@@ -3,6 +3,8 @@ var config = require('root/config.json');
 var request = require('request');
 var qRequest = require('root/lib/q-request');
 
+var batchSize = parseInt(process.env.DOWNLOAD_BATCH_SIZE) || 10;
+
 //fetch all images from cloudinary (request 500 images repeatedly until no more are found)
 var fetchImages = function(opts, images) {
   if (!images) images = [];
@@ -30,13 +32,26 @@ var fetchImages = function(opts, images) {
 var downloadImages = function(savePath, images) {
   console.log("images remaining in batch", images.length);
 
-  var firstImage = images.splice(0,1)[0];
-  var result = qRequest.downloadFile(firstImage.url, getFilename(firstImage), savePath);
-  images.forEach(function(image) {
+  var promiseGenerators = images.map(function(image) {
     var filename = getFilename(image);
-    var nextDownload = qRequest.downloadFile.bind(this, image.url, filename, savePath);
-    result = result.then(nextDownload);
-  })
+    var download = qRequest.downloadFile.bind(this, image.url, filename, savePath);
+    return download;
+  });
+
+  function batchElements(elements) {
+    var batch = elements.slice(0, batchSize);
+    if (batch.length < batchSize) { return [batch]; }
+    var tail = batchElements(elements.slice(batchSize));
+    return [batch].concat(tail);
+  }
+
+  var result = batchElements(promiseGenerators).reduce(function(promiseChain, promiseGroup) {
+    return promiseChain.then(function() {
+      return Q.all(promiseGroup.map(function(promiseGenerator) {
+        return promiseGenerator();
+      }));
+    });
+  }, Q(null));
 
   return result;
 };

@@ -1,9 +1,12 @@
+var Q = require('q');
 var crypto = require('crypto');
 var fs = require('fs');
 var qs = require('querystring');
 
 var qRequest = require("root/lib/q-request");
 var config = require("root/config");
+
+var batchSize = parseInt(process.env.UPLOAD_BATCH_SIZE) || 10;
 
 var uploadImage = function(imagesDir, filename) {
   console.log('uploading file', filename);
@@ -42,17 +45,28 @@ var uploadImage = function(imagesDir, filename) {
 };
 
 var uploadImages = function(imagesDir) {
-  console.log("imagesDir", imagesDir);
-
   var files = fs.readdirSync(imagesDir);
 
-  var firstFile = files.splice(0,1)[0];
-  var result = uploadImage(imagesDir, firstFile);
-  files.forEach(function(filename) {
-    //queue the next upload (use .bind to prevent immediate execution)
-    var nextUpload = uploadImage.bind(this, imagesDir, filename);
-    result = result.then(nextUpload);
+  var promiseGenerators = files.map(function(filename) {
+    var upload = uploadImage.bind(this, imagesDir, filename);
+    return upload;
   });
+
+  function batchElements(elements) {
+    var batch = elements.slice(0, batchSize);
+    if (batch.length < batchSize) { return [batch]; }
+    var tail = batchElements(elements.slice(batchSize));
+    return [batch].concat(tail);
+  }
+
+  var result = batchElements(promiseGenerators).reduce(function(promiseChain, promiseGroup) {
+    return promiseChain.then(function() {
+      return Q.all(promiseGroup.map(function(promiseGenerator) {
+        return promiseGenerator();
+      }));
+    });
+  }, Q(null));
+
   return result;
 };
 
