@@ -3,8 +3,8 @@ var crypto = require('crypto');
 var fs = require('fs');
 var qs = require('querystring');
 
-var qRequest = require("root/lib/q-request");
-var config = require("root/config");
+var qRequest = require("./lib/q-request");
+var config = require("./config");
 
 var batchSize = parseInt(process.env.UPLOAD_BATCH_SIZE) || 10;
 

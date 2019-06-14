@@ -1,7 +1,7 @@
 var Q = require('q');
-var config = require('root/config.json');
+var config = require('./config.json');
 var request = require('request');
-var qRequest = require('root/lib/q-request');
+var qRequest = require('./lib/q-request');
 
 var batchSize = parseInt(process.env.DOWNLOAD_BATCH_SIZE) || 10;
 
